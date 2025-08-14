@@ -13,7 +13,7 @@ interface RequestData {
   method: HTTP_METHODS;
   host: string;
   path: string;
-  body?: userData;
+  body?: UserData;
   params: Record<string, string>;
 }
 
@@ -84,9 +84,9 @@ class Observable<T, E> {
     this._subscribe = subscribe;
   }
 
-  static from(values: RequestData[]) {
-    return new Observable((observer: Observer<RequestData, RequestError>) => {
-      values.forEach((value: RequestData) => observer.next(value));
+  static from<TVal, EVal>(values: TVal[]) {
+    return new Observable((observer: Observer<TVal, EVal>) => {
+      values.forEach((value: TVal) => observer.next(value));
 
       observer.complete();
 
@@ -152,7 +152,7 @@ const handleError = (error: RequestError): RequestStatusObject => {
 
 const handleComplete = (): void => console.log("complete");
 
-const requests$ = Observable.from(requestsMock);
+const requests$ = Observable.from<RequestData, RequestError>(requestsMock);
 
 const subscription = requests$.subscribe({
   next: handleRequest,
