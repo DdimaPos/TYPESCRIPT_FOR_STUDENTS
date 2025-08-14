@@ -1,7 +1,7 @@
 type HTTP_METHODS = "POST" | "PUT" | "DELETE" | "PATCH" | "GET";
 type RequestStatus = 200 | 500 | 400;
 
-interface userData {
+interface UserData {
   name: string;
   age: number;
   roles: Array<string>;
@@ -25,29 +25,29 @@ interface RequestStatusObject {
   status: RequestStatus;
 }
 
-interface ObserverHandlers {
-  next: (value: RequestData) => RequestStatusObject;
-  error: (error: RequestError) => RequestStatusObject;
+interface ObserverHandlers<T, E> {
+  next: (value: T) => RequestStatusObject;
+  error: (error: E) => RequestStatusObject;
   complete: () => void;
 }
 
-class Observer {
+class Observer<T, E> {
   isUnsubscribed: boolean;
-  handlers: ObserverHandlers;
+  handlers: ObserverHandlers<T, E>;
   public _unsubscribe: () => void;
 
-  constructor(handlers: ObserverHandlers) {
+  constructor(handlers: ObserverHandlers<T, E>) {
     this.handlers = handlers;
     this.isUnsubscribed = false;
   }
 
-  next(value: RequestData): void {
+  next(value: T): void {
     if (this.handlers.next && !this.isUnsubscribed) {
       this.handlers.next(value);
     }
   }
 
-  error(error: RequestError): void {
+  error(error: E): void {
     if (!this.isUnsubscribed) {
       if (this.handlers.error) {
         this.handlers.error(error);
@@ -76,16 +76,16 @@ class Observer {
   }
 }
 
-class Observable {
-  _subscribe: (arg0: Observer) => () => void;
+class Observable<T, E> {
+  _subscribe: (arg0: Observer<T, E>) => () => void;
   _unsubscribe: () => void;
 
-  constructor(subscribe: (arg0: Observer) => () => void) {
+  constructor(subscribe: (arg0: Observer<T, E>) => () => void) {
     this._subscribe = subscribe;
   }
 
   static from(values: RequestData[]) {
-    return new Observable((observer: Observer) => {
+    return new Observable((observer: Observer<RequestData, RequestError>) => {
       values.forEach((value: RequestData) => observer.next(value));
 
       observer.complete();
@@ -96,7 +96,7 @@ class Observable {
     });
   }
 
-  subscribe(obs: ObserverHandlers) {
+  subscribe(obs: ObserverHandlers<T, E>) {
     const observer = new Observer(obs);
 
     observer._unsubscribe = this._subscribe(observer);
@@ -114,7 +114,7 @@ const HTTP_GET_METHOD: HTTP_METHODS = "GET";
 const HTTP_STATUS_OK: RequestStatus = 200;
 const HTTP_STATUS_INTERNAL_SERVER_ERROR: RequestStatus = 500;
 
-const userMock: userData = {
+const userMock: UserData = {
   name: "User Name",
   age: 26,
   roles: ["user", "admin"],
